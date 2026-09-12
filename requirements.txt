@@ -4,3 +4,6 @@ scipy
 scikit-learn
 seaborn
 jupyter
+pandas
+torch
+python-docx
