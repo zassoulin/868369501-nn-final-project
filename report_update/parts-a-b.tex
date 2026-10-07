@@ -35,19 +35,19 @@ Both neurons fire action potentials during the current step. The main difference
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\linewidth,height=0.27\textheight,keepaspectratio]{figures/parts-a-b/figure-a3.png}
+\includegraphics[width=0.80\linewidth,height=0.35\textheight,keepaspectratio]{figures/parts-a-b/figure-a3.png}
 \caption{Membrane voltage (mV) vs. time (s) for the spiny and aspiny neurons.}
 \label{fig:a3}
 \end{figure}
 
 \FloatBarrier
 \subsection{Question 4: Spike Trains and Action-Potential Threshold}
-
-Both neurons rest around -70 to -80 mV and their spikes peak well above 0 mV, so a threshold of -20 mV sits in an empty gap between the two. A sweep over thresholds from -50 to +4 mV confirms the detected spike count is exactly constant (25 for spiny, 91 for aspiny) across roughly -35 to +2 mV, so the exact value inside that range does not matter.
+The neurons Action-potential threshold sits around -40 to -45 mV for both cell types, it can clearly be seen in Figure 5 where the voltage shoots up signaling the neuron has jumped into action.\\
+As for the threshold we choose for detecting an action inside the neurons, both neurons rest around -70 to -80 mV and their spikes peak well above 0 mV, so a threshold of -20 mV sits in an empty gap between the two. A sweep over thresholds from -50 to +4 mV confirms the detected spike count is exactly constant (25 for spiny, 91 for aspiny) across roughly -35 to +2 mV, so the exact value inside that range does not matter.
 
 \begin{itemize}
-    \item Too low (e.g. -60 mV): falls inside the resting-potential noise band $\rightarrow$ false positive spikes, inflated firing rate, corrupted ISI/CV statistics.
-    \item Too high (e.g. +40 mV): exceeds some real spike peaks (aspiny peaks reach only $\sim$22 mV) $\rightarrow$ missed spikes, underestimated firing rate.
+    \item Too low (e.g.\ $-70$~mV): falls under the depolarized voltage between spikes during the step, voltage won't reach it during rapid bursts $\rightarrow$ missing spikes, underestimated firing rate and corrupted ISI/CV statistics.
+    \item Too high (e.g.\ $+40$~mV): exceeds all aspiny spike peaks ($\approx 22$~mV) and some spiny ones ($\approx 40$--$45$~mV) $\rightarrow$ missed spikes, underestimated firing rate.
 \end{itemize}
 
 \begin{figure}[H]
@@ -89,7 +89,7 @@ Aspiny & 0.049 & 9.7 -- 12.8 & 90 & Pacemaker-like (CV $\ll$ 1) \\
 \end{tabularx}
 \end{table}
 
-Both CVs are far below 1, so both neurons fire highly regularly during the stimulus (pacemaker-like, not Poisson). The aspiny neuron is even more regular despite firing $\sim$4x faster. ISIs lengthen slightly and monotonically over the step -- spike-frequency adaptation -- which is the main source of the small variability captured by the CV.
+Both CVs are far below 1, so both neurons fire highly regularly during the stimulus (pacemaker-like, not Poisson). The aspiny neuron is even more regular despite firing $\sim$4x faster. ISIs tend to lengthen over the step (an upward trend, though not strictly monotonic) -- spike-frequency adaptation -- which is the main source of the small variability captured by the CV.
 
 \begin{figure}[H]
 \centering
@@ -101,23 +101,23 @@ Both CVs are far below 1, so both neurons fire highly regularly during the stimu
 \FloatBarrier
 \subsection{Question 6: Time-Dependent Firing Rate}
 
-Two estimators are shown: a 50 ms-binned PSTH (spike count / bin width) and a Gaussian-kernel estimate (sigma = 50 ms). The kernel is continuous and insensitive to bin placement; sigma = 50 ms is short enough to resolve the onset/offset of the 1 s current step while long enough (relative to the 10-45 ms ISIs) to average over several spikes for a smooth estimate. Both methods agree closely, as expected given how regular (low-CV) the firing is.
+Two estimators are shown: a 50 ms-binned PSTH (spike count / bin width) and a Gaussian-kernel estimate (sigma = 50 ms). The kernel is continuous and insensitive to bin placement; sigma = 50 ms is short enough to resolve the onset/offset of the 1 s current step while long enough (relative to the 10-45 ms ISIs) to average over several spikes for a smooth estimate. Both methods agree closely, as expected given how regular (low-CV) the firing is. The upper panel of Figure~\ref{fig:a6} shows the whole response: the rate rises at stimulus onset (1.02 s), stays roughly constant during the step (about 25 Hz for the spiny neuron and about 90 Hz for the aspiny neuron) and returns to zero at offset (2.02 s). The lower panel zooms in on the onset.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.80\linewidth,height=0.34\textheight,keepaspectratio]{figures/parts-a-b/figure-a6.png}
-\caption{Time-dependent firing rate (Hz) vs. time (s): binned PSTH vs. Gaussian-kernel estimate.}
+\caption{Time-dependent firing rate (Hz) vs. time (s): binned PSTH vs. Gaussian-kernel estimate. Top: the whole response, with dotted lines at stimulus on and off. Bottom: zoom on the stimulus onset.}
 \label{fig:a6}
 \end{figure}
 
 \FloatBarrier
 \subsection{Question 7: Average Firing Rates and Probability Distributions}
 
-Average firing rate during the stimulus: spiny = 25.00 Hz, aspiny = 91.00 Hz. Gaussian distributions were built around these means with sigma\_spiny = 15 Hz and sigma\_aspiny = 20 Hz, chosen to give the two curves clear but partial overlap (about a third of the 66 Hz gap between the means).
+Average firing rate during the stimulus: spiny = 25.00 Hz, aspiny = 91.00 Hz. Gaussian distributions were built around these means with $\sigma_{\text{spiny}} = 15$~Hz and $\sigma_{\text{aspiny}} = 20$~Hz, chosen to give the two curves clear but partial overlap (about a third of the 66 Hz gap between the means).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.70\linewidth,height=0.29\textheight,keepaspectratio]{figures/parts-a-b/figure-a7.png}
+\includegraphics[width=0.8\linewidth,height=0.35\textheight,keepaspectratio]{figures/parts-a-b/figure-a7.png}
 \caption{Gaussian probability distributions of firing rate (Hz) for spiny vs. aspiny neurons.}
 \label{fig:a7}
 \end{figure}
@@ -185,12 +185,11 @@ F1 (Aspiny) & 0.974 \\
 \end{tabular}
 \end{table}
 
-LR = P(rate \textbar{} Aspiny) / P(rate \textbar{} Spiny); LR $>$ 1 favors Aspiny, LR $<$ 1 favors Spiny. The two rates nearest mu\_spiny classify as Spiny, the two nearest mu\_aspiny classify as Aspiny, and the middle rate (near the Q8 threshold z) sits at the decision boundary.
-
+LR = P(rate \textbar{} Aspiny) / P(rate \textbar{} Spiny); LR $>$ 1 favors Aspiny, LR $<$ 1 favors Spiny. The two rates nearest $\mu_{\text{spiny}}$ (25 and 41.5 Hz) are classified Spiny, and the two nearest $\mu_{\text{aspiny}}$ (74.5 and 91 Hz) are classified Aspiny. The middle rate, 58 Hz, lies just above the Q8 threshold z = 54.59 Hz, so it is also classified Aspiny, but with the weakest evidence of the five (LR = 2.16). This matches Q8: LR = 1 exactly at z, so the LR rule and the threshold classifier give the same decisions.
 What could change these values:
 
 \begin{itemize}
-    \item A shift in either neuron's true mean firing rate would move the distributions and could flip the LR sign for a fixed rate.
+    \item A shift in either neuron's true mean firing rate would move the distributions and could flip the log-LR sign for a fixed rate.
     \item A wider variance (more noise, shorter measurement window) increases overlap and pulls LR toward 1 over a broader range, making the two types harder to distinguish.
     \item Unequal class priors: LR alone ignores how common each neuron type is; the decision should then use the posterior odds (LR x prior ratio), not LR alone.
 \end{itemize}
@@ -225,6 +224,7 @@ Data: 1424 neurons x 41 standardized numeric electrophysiological features. 700 
 
 \FloatBarrier
 \subsubsection*{(b) What Do the PCA Axes Represent?}
+\label{sec:b-var}
 
 Each principal component is a linear combination of the 41 standardized features, ordered by the amount of variance it captures: PC1 captures the most variance, PC2 the most remaining variance orthogonal to PC1, and PC3 the next. Capturing the most variance does not mean an axis is the best indicator for separating spiny from aspiny -- PCA is unsupervised and has no notion of the class label.
 
@@ -247,7 +247,7 @@ PC3 & 13.6\% & 0.650 \\
 \end{tabularx}
 \end{table}
 
-PC1 separates the two neuron types clearly better than PC2 or PC3: its 1D distribution shows the least overlap, and a logistic-regression classifier trained on PC1 alone reaches $\sim$0.80 cross-validated accuracy vs. $\sim$0.64-0.65 for PC2/PC3. This is because PC1 captures by far the most variance, and the biological spiny/aspiny distinction (spike width, adaptation, input resistance) happens to be one of the dominant sources of variance in this feature set.
+PC1 separates the two neuron types clearly better than PC2 or PC3: its 1D distribution shows the least overlap, and a logistic-regression classifier trained on PC1 alone reaches $\sim$0.80 cross-validated accuracy vs. $\sim$0.64-0.65 for PC2/PC3. PC1 captures by far the most variance, though that is not the main reason for its accuracy (as noted in section~\ref{sec:b-var}, PCA has no notion of the class label). The reason PC1 has the highest accuracy is because PC1 is built mainly from action-potential shape features such as upstroke/downstroke ratio, downstroke velocity, spike peak voltage which happen to be one of the dominant sources of variance in this feature set.
 
 \begin{figure}[H]
 \centering
@@ -313,7 +313,6 @@ Train and validation MSE stay close together for all three variants (final gap $
 
 \FloatBarrier
 \subsubsection*{(c) Autoencoder vs. PCA (Qualitative \& Quantitative)}
-
 \begin{table}[H]
 \centering
 \caption{Class separation and cross-validated classifier accuracy in the three-dimensional representations, computed on all 1,424 neurons.}
@@ -338,7 +337,7 @@ Qualitatively, the AE bottlenecks show the two classes forming slightly more dis
 
 \begin{table}[H]
 \centering
-\caption{Reconstruction MSE through three dimensions (standardized units). Every model is fitted on the same 1,139 training rows and evaluated on those rows and on the 285 held-out validation rows.}
+\caption{Reconstruction MSE through three dimensions (standardized units). Every model is fitted on the same 1,139 training rows and evaluated on those rows and on the 285 held-out validation rows.\protect\footnotemark}
 \label{tab:b2c-recon}
 \small
 \begin{tabular}{@{}lccc@{}}
@@ -351,11 +350,8 @@ Denoising AE & 0.3025 & 0.3628 & $-9.8\%$ \\
 Weight-Decay AE & 0.3318 & 0.3758 & $-6.5\%$ \\
 \bottomrule
 \end{tabular}
-
-\smallskip
-{\footnotesize\emph{Note:} the train MSE here differs slightly from Table~\ref{tab:b2a}. Table~\ref{tab:b2a} reports the loss averaged over the last training epoch, while the weights were still being updated (and, for the Denoising AE, on noisy inputs); this table evaluates the final weights on clean inputs. The validation MSE is measured the same way in both, so it is identical.\par}
 \end{table}
-
+\footnotetext{The train MSE here differs slightly from Table~5. Table~5 reports the training loss averaged over the mini-batches of the last epoch while the weights are still being updated, and for the Denoising AE it is computed on noisy inputs. Table~7 re-evaluates each final model once on the clean training rows. The validation values are computed the same way in both tables and match exactly.}
 Both methods squeeze 41 features through 3 numbers, so they can also be compared on reconstruction (Table~\ref{tab:b2c-recon}). On unseen neurons the nonlinear autoencoder reconstructs only about 10\% better than plain linear PCA (validation MSE 0.363 vs.\ 0.402). The comparison has to be made on the same rows: the Question~1 PCA-3 explains 62.7\% of the variance, i.e.\ an MSE of 0.373, but that is an in-sample figure on the rows it was fitted on and is not comparable with the autoencoder's held-out 0.363.
 
 Taken together, the autoencoder's advantage in \emph{reconstruction} is small, yet its advantage in \emph{class separation} is proportionally larger: the silhouette score rises by about a third (0.225 $\rightarrow$ 0.30) and classification accuracy by about 3 points. Neither method ever saw the labels. This suggests that most of what three dimensions can preserve of these features is already captured linearly, and that the little extra the nonlinear bottleneck keeps is disproportionately the structure that distinguishes spiny from aspiny neurons. Reconstruction error alone would have understated the difference between the two representations.
@@ -377,4 +373,4 @@ The worst reconstructions are dominated by a single feature, \texttt{latency}, w
 \FloatBarrier
 \subsubsection*{(e) Did the Autoencoder Learn a Better Representation?}
 
-Yes, modestly but consistently. All three AE variants beat PCA-3 on both silhouette score (0.228 $\rightarrow$ 0.28-0.30) and 5-fold cross-validated classifier accuracy (0.868 $\rightarrow$ 0.88-0.90); the selected variant, the Denoising AE, raises accuracy to 0.898 and silhouette to 0.299. The gain is real but not dramatic: PCA already does well (0.868) because a single linear axis (PC1) already captures much of the spiny/aspiny distinction (Q1.c), leaving limited room for a nonlinear method to improve further. The improvement in class separation is nevertheless larger than the improvement in reconstruction: fitted on the same training rows, the autoencoder's validation reconstruction MSE is only about 10\% below PCA-3's (0.363 vs.\ 0.402), while its silhouette score is about a third higher. Regularization made little difference to class separation: the Denoising AE and the Standard AE are nearly tied (accuracy 0.898 vs.\ 0.895, silhouette 0.299 vs.\ 0.304), and the Weight-Decay AE is the lowest of the three on both metrics (0.878, 0.280).
+Yes, modestly but consistently. All three AE variants beat PCA-3 on both silhouette score (0.228 $\rightarrow$ 0.28-0.30) and 5-fold cross-validated classifier accuracy (0.868 $\rightarrow$ 0.88-0.90); the selected variant, the Denoising AE, raises accuracy to 0.898 and silhouette to 0.299. The gain is real but not dramatic: PCA already does well (0.868) because a single linear axis (PC1) already captures much of the spiny/aspiny distinction (Q1.c), leaving limited room for a nonlinear method to improve further. Regularization made little difference to class separation: the Denoising AE and the Standard AE are nearly tied (accuracy 0.898 vs.\ 0.895, silhouette 0.299 vs.\ 0.304), and the Weight-Decay AE is the lowest of the three on both metrics (0.878, 0.280).

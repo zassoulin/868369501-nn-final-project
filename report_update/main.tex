@@ -8,7 +8,7 @@
 \usepackage{microtype}
 \usepackage{float}
 \usepackage[font=small,labelfont=bf]{caption}
-
+\usepackage[hidelinks]{hyperref}
 \raggedbottom
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{5pt}
@@ -23,7 +23,9 @@
 \begin{document}
 
 \maketitle
-
+\begin{center}
+\small\textbf{Source code:} \url{https://github.com/zassoulin/868369501-nn-final-project}
+\end{center}
 \input{parts-a-b}
 \clearpage
 
@@ -228,7 +230,7 @@ Learning rate & Validation accuracy & \\
 0.0001 & 0.9825 & converges too slowly for 100 epochs \\
 0.001  & 0.9912 & \\
 0.01   & 1.0000 & \\
-0.1    & \textbf{0.5088} & training diverges \\
+0.1    & \textbf{0.5088} & training collapses \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -282,7 +284,33 @@ So precision (0.8954) is far below recall (0.9786), the opposite of the logistic
 This is the weakest model in Part~C, worse even than the perceptron. The reason is not the architecture but the training method. Full-batch GD makes \textbf{one parameter update per epoch}, so 300 epochs means only 300 updates. SGD with batch size 10 makes 103 updates per epoch, or 30{,}900 over the same 300 epochs. Figure~\ref{fig:loss_gd_sgd} shows that the GD loss is still falling at epoch 300: the model simply has not finished training.
 
 \FloatBarrier
-\subsubsection*{(b) Comparing the GD and SGD loss curves}
+\subsubsection*{(b) Error analysis of the SGD-trained model and comparison with GD}
+
+For the SGD-trained model, the test-set confusion matrix shows 143 true negatives, 2 false positives, 2 false negatives and 138 true positives (Figure~\ref{fig:conf_sgd}). Treating spiny as the positive class, both precision and recall are $138/(138+2)=0.9857$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\linewidth,height=0.36\textheight,keepaspectratio]{SGD_CONFUSION_MATRIX.png}
+\caption{Confusion matrix of the SGD-trained MLP on the test set (rows: true labels; columns: predicted labels).}
+\label{fig:conf_sgd}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Test-set classification metrics for the SGD-trained MLP (spiny = positive class).}
+\label{tab:q4b_metrics}
+\small
+\begin{tabular}{lccc}
+\toprule
+Accuracy & Precision & Recall & F1 \\
+\midrule
+0.9860 & 0.9857 & 0.9857 & 0.9857 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\FloatBarrier
 
 \begin{table}[H]
 \centering
@@ -327,8 +355,7 @@ The answer depends on how the network was trained (Table~\ref{tab:q4c}).
 
 \textbf{The GD-trained model does not overfit; it underfits.} It scores \emph{higher} on the test set than on the training set. Its training and validation losses are both high (0.2370 and 0.2668), stay close together, and are still falling at the last epoch. A model that has not yet learned its training set cannot be memorizing it.
 
-\textbf{The SGD-trained model does overfit}, and the loss curve shows when it starts. The validation loss reaches its lowest value, \textbf{0.0501, at epoch 112}. After that it rises to 0.0583 by epoch 300, while the training loss keeps falling to 0.0037. By the end, the validation loss is about 16 times the training loss. So every epoch after 112 improves the fit on the training data while making the model slightly worse on unseen data. The test metrics agree: 1.0000 accuracy on the training set against 0.9860 on the test set.
-
+\textbf{The SGD-trained model does overfit}, and the loss curve shows when it starts. The validation loss reaches its lowest value, \textbf{0.0501, at epoch 112}. After that it rises to 0.0583 by epoch 300, while the training loss keeps falling to 0.0037. By the end, the validation loss is about 16 times the training loss. So every epoch after 112 improves the fit on the training data while making the model slightly worse on unseen data. The rise is small in absolute terms: $(0.0583 - 0.0501) \times 114 \approx 0.9$~nats summed over the whole validation set, which a single misclassified sample becoming more confidently wrong could account for. Still, the test metrics confirm a gap: 1.0000 accuracy on the training set against 0.9860 on the test set.
 The overfitting is mild. An accuracy gap of $+0.0140$ is 4 neurons out of 285, and the model still generalizes well. Stopping training at around epoch 112, when the validation loss is lowest (early stopping), would have avoided most of it.
 
 \FloatBarrier
@@ -435,7 +462,7 @@ MLP, SGD + dropout 0.5                   & \textbf{0.9930} & \textbf{0.9929} \\
 \begin{itemize}
     \item \textbf{The task is almost linearly separable.} Logistic regression already reaches 98.6\%, and the best MLP is only two neurons better.
     \item \textbf{Training mattered more than architecture.} The same network got 0.9333 with GD and 0.9860 with SGD, because GD made far fewer updates. In the sweep, only the learning rate had a real effect.
-    \item \textbf{The linear models did not overfit; the MLPs did, mildly.} The MLPs reached 100\% training accuracy, and adding dropout halved the train--test gap and gave the best test accuracy.
+    \item \textbf{The linear models did not overfit; the MLPs mostly did, mildly.} The Adam- and SGD-trained MLPs reached 100\% training accuracy (the GD model underfit instead), and adding dropout halved the train--test gap and gave the best test accuracy.
     \item \textbf{The few remaining errors are neurons that look like the other class} on the most informative features, so these features alone probably can't classify them correctly.
 \end{itemize}
 
