@@ -1,0 +1,443 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{booktabs} % \toprule / \midrule / \bottomrule in tables
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[section]{placeins}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage[font=small,labelfont=bf]{caption}
+
+\raggedbottom
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{5pt}
+\setlength{\intextsep}{12pt plus 2pt minus 2pt}
+\captionsetup[table]{position=top,skip=6pt}
+\captionsetup[figure]{skip=6pt}
+
+\title{Neural Networks --- Final Project}
+\author{Noam Major - 208941989 \and Ziv Assoulin - 325312999}
+\date{September 2026}
+
+\begin{document}
+
+\maketitle
+
+\input{parts-a-b}
+\clearpage
+
+\section{Part C}
+
+\paragraph{Setup (common to all questions).}
+The feature table (1{,}424 cells, 41 numeric electrophysiology features, label \texttt{dendrite\_type}) was split 80/20 with a stratified random split (\texttt{random\_state=42}): 1{,}139 training cells and 285 test cells (145 aspiny / 140 spiny). The label column was never used as an input feature. All features were standardized with a \texttt{StandardScaler} fitted on the training set only and applied to the test set, so no test statistics leak into preprocessing. Throughout, \emph{spiny} is the positive class.
+
+\FloatBarrier
+\subsection{Question 1}
+
+\FloatBarrier
+\subsubsection*{(a) Error analysis of the logistic regression}
+The main results are: accuracy $=0.9860$, precision $=0.9928$, recall $=0.9786$, F1 $=0.9856$.
+The confusion matrix (Figure~\ref{fig:conf_log}) gives: true negatives 144, false positives 1, false negatives 3, true positives 137.
+
+The model makes 4 errors out of 285 samples, but they are not symmetric:
+\begin{itemize}
+    \item 3 false negatives --- spiny neurons classified as aspiny
+    \item 1 false positive --- an aspiny neuron classified as spiny
+\end{itemize}
+
+This is why recall (0.9786) sits below precision (0.9928): the model is somewhat
+conservative about assigning the spiny label. Almost everything it calls spiny really
+is spiny, but it misses three genuine spiny neurons. Biologically, this suggests that a small
+subset of spiny neurons carries features close enough to the aspiny profile
+that they fall on the wrong side of the decision boundary.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\linewidth,height=0.36\textheight,keepaspectratio]{confusionmatrix1a.png}
+\caption{Confusion matrix of the logistic regression on the test set.}
+\label{fig:conf_log}
+\end{figure}
+
+\FloatBarrier
+\subsection{Question 2}
+
+A perceptron was trained on the same training set and evaluated on the same test set, using the same \texttt{StandardScaler} pipeline. It is the same linear model as the logistic regression, but with no sigmoid: it outputs a hard class decision rather than a probability, and it updates its weights only on misclassified samples.
+
+\FloatBarrier
+\subsubsection*{(a) Which model generalized better?}
+
+\begin{table}[H]
+\centering
+\caption{Test-set performance of the two linear models (spiny = positive class).}
+\label{tab:q2a}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Model & Accuracy & Precision & Recall & F1 \\
+\midrule
+Logistic regression & \textbf{0.9860} & \textbf{0.9928} & 0.9786 & \textbf{0.9856} \\
+Perceptron          & 0.9614 & 0.9448 & 0.9786 & 0.9614 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Logistic regression generalizes better.} It wins on accuracy, precision and F1, and ties the perceptron on recall (Table~\ref{tab:q2a}). The recall tie is exact: both models correctly identify 137 of the 140 spiny neurons.
+
+So the whole difference between the two models is in the \emph{false positives}. The perceptron's test confusion matrix is 137 true negatives, 8 false positives, 3 false negatives and 137 true positives. It finds exactly as many spiny neurons as the logistic regression, but mislabels 8 aspiny neurons as spiny against the logistic regression's 1.
+
+The reason is how each model sets its boundary. Logistic regression minimizes a loss over \emph{every} training sample, including correctly classified ones, so the boundary settles where the two classes are best separated on average. The perceptron stops updating on a sample once it is classified correctly, so its final boundary depends on the last few mistakes it corrected, and it has no reason to move away from the aspiny cloud once it clears it.
+
+\FloatBarrier
+\subsubsection*{(b) Does the model overfit?}
+
+\begin{table}[H]
+\centering
+\caption{Train vs.\ test metrics. A positive gap means the model does worse on unseen data.}
+\label{tab:q2b}
+\small
+\begin{tabular}{llccc}
+\toprule
+Model & Metric & Train & Test & Gap (train $-$ test) \\
+\midrule
+Logistic regression & Accuracy  & 0.9824 & 0.9860 & $-0.0035$ \\
+                    & Precision & 0.9839 & 0.9928 & $-0.0089$ \\
+                    & Recall    & 0.9804 & 0.9786 & $+0.0018$ \\
+                    & F1        & 0.9821 & 0.9856 & $-0.0035$ \\
+\midrule
+Perceptron          & Accuracy  & 0.9675 & 0.9614 & $+0.0061$ \\
+                    & Precision & 0.9763 & 0.9448 & $+0.0315$ \\
+                    & Recall    & 0.9571 & 0.9786 & $-0.0214$ \\
+                    & F1        & 0.9666 & 0.9614 & $+0.0052$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{No, neither model overfits} (Table~\ref{tab:q2b}). Overfitting shows up as training performance clearly above test performance, and that does not happen here.
+
+Logistic regression scores slightly \emph{higher} on the test set than on the training set on three of the four metrics. A model that memorized its training data could not do that. The perceptron's accuracy gap is $+0.0061$, which is under two samples out of 285 and within noise.
+
+The perceptron's precision and recall gaps are worth a closer look, because they point in \emph{opposite} directions: precision drops by $0.0315$ from train to test while recall rises by $0.0214$. Overfitting would make both worse. Instead, the error type flips between the two sets. On the training set it makes more false negatives than false positives (24 vs.\ 13); on the test set it makes more false positives (8 vs.\ 3). The boundary sits in a slightly different place relative to each set, trading precision for recall, which fits the instability described in (a). It does not indicate that the model memorized the training data.
+
+\FloatBarrier
+\subsection{Question 3}
+
+A multilayer perceptron was trained to classify the two neuron types. The input is a table of numeric features, so all layers are fully connected. The features were standardized before training with the same \texttt{StandardScaler} fitted on the training set only, and the neuron-type column was not used as an input. All networks use a 2-unit output layer trained with cross-entropy loss.
+
+\FloatBarrier
+\subsubsection*{(a) Comparison of two MLP architectures}
+
+The two architectures differ in depth, activation function and regularization (Table~\ref{tab:q3a}):
+\begin{itemize}
+    \item \textbf{mlp}: one hidden layer, ReLU, no regularization. This is the smaller baseline.
+    \item \textbf{mlp-dropout}: two hidden layers, GELU, and dropout of 0.2 after each hidden layer.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{The two MLP architectures, their training settings, and their accuracy.}
+\label{tab:q3a}
+\small
+\begin{tabular}{lcc}
+\toprule
+ & \textbf{mlp} & \textbf{mlp-dropout} \\
+\midrule
+Layer widths            & $41 \rightarrow 32 \rightarrow 2$ & $41 \rightarrow 32 \rightarrow 32 \rightarrow 2$ \\
+Activation functions    & ReLU & GELU \\
+Regularization          & none & dropout 0.2 \\
+Trainable parameters    & 1{,}410 & 2{,}466 \\
+Optimizer               & Adam & Adam \\
+Learning rate           & 0.001 & 0.001 \\
+Epochs                  & 100 & 100 \\
+Batch size              & 32 & 32 \\
+\midrule
+Train accuracy          & 1.0000 & 1.0000 \\
+Test accuracy           & 0.9860 & \textbf{0.9930} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The parameter counts include weights and biases:
+\begin{itemize}
+    \item \textbf{mlp}: $41 \cdot 32 + 32 = 1{,}344$ in the hidden layer and $32 \cdot 2 + 2 = 66$ in the output layer, giving 1{,}410.
+    \item \textbf{mlp-dropout}: the same 1{,}344 and 66, plus $32 \cdot 32 + 32 = 1{,}056$ for the second hidden layer, giving 2{,}466. Dropout layers have no parameters.
+\end{itemize}
+
+
+The deeper, regularized architecture scores higher on the test set: 0.9930 against 0.9860, which is two fewer errors, using $1.75\times$ the parameters. Both networks reach 1.0000 accuracy on the training set, so both memorize it completely, yet \textbf{mlp-dropout} generalizes better.
+
+This comparison cannot tell us \emph{which} change caused the improvement. The two architectures differ in depth, activation and dropout at the same time, so the gain belongs to the combination. Part (c) varies one hyper-parameter at a time to separate these effects, and Question~4(d) tests dropout on its own.
+
+\FloatBarrier
+\subsubsection*{(b) MLP against the logistic regression and perceptron baselines}
+
+\begin{table}[H]
+\centering
+\caption{Test-set performance of all four models (spiny = positive class).}
+\label{tab:q3b}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Model & Accuracy & Precision & Recall & F1 \\
+\midrule
+Logistic regression    & 0.9860 & 0.9928 & 0.9786 & 0.9856 \\
+Perceptron             & 0.9614 & 0.9448 & 0.9786 & 0.9614 \\
+mlp           & 0.9860 & 0.9857 & 0.9857 & 0.9857 \\
+mlp-dropout  & \textbf{0.9930} & \textbf{0.9929} & \textbf{0.9929} & \textbf{0.9929} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{mlp-dropout} is the best model on all four metrics (Table~\ref{tab:q3b}). The margin is small, though. It beats the logistic regression by 0.0070 in accuracy, which is \textbf{two samples} out of 285. The plain \texttt{mlp} has exactly the same accuracy as the logistic regression, with slightly lower precision and slightly higher recall. The perceptron is the only model that clearly falls behind.
+
+The main conclusion is that this task is \textbf{close to linearly separable}. A linear classifier already reaches 98.6\%, and a network with 2{,}466 parameters adds only two more correct samples. For this dataset, the extra capacity of an MLP brings a marginal gain at best.
+
+The models also behave differently on the training set. Both MLPs reach 1.0000 training accuracy, giving train--test gaps of $+0.0140$ (\textbf{mlp}) and $+0.0070$ (\textbf{mlp-dropout}). The logistic regression has a \emph{negative} gap ($-0.0035$). So the networks memorize their training set and the linear models do not, even though their test accuracy is nearly the same. This is analyzed further in Question~4(c).
+
+\FloatBarrier
+\subsubsection*{(c) Hyper-parameter sensitivity}
+
+Five hyper-parameters were tested \textbf{one at a time}. In each sweep, one hyper-parameter changes while all the others stay at a fixed base configuration: two hidden layers of 32 units, ReLU, no dropout, Adam with learning rate 0.001, 100 epochs and batch size 32. The values tested were:
+\begin{itemize}
+    \item learning rate: 0.0001, 0.001, 0.01, 0.1
+    \item hidden units per layer: 8, 16, 32, 64, 128
+    \item number of hidden layers: 1, 2, 3, 4
+    \item dropout: 0, 0.2, 0.5
+    \item batch size: 8, 16, 32, 64, 128
+\end{itemize}
+Sweeping every combination at once would mix the effects together, and no single hyper-parameter's influence could be read from the result.
+
+Every configuration was scored on a \textbf{validation set} made of 10\% of the training set (114 samples), \emph{not} on the test set. If hyper-parameters were chosen by test accuracy, the reported test score would be the best of many tries and would no longer be a fair estimate of generalization.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\linewidth,height=0.36\textheight,keepaspectratio]{sensitivity3c.png}
+\caption{Validation accuracy as each hyper-parameter is varied, with all others held fixed. Learning rate, hidden units and batch size are plotted on a log scale.}
+\label{fig:sensitivity}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{The learning-rate sweep, the only one with a large effect.}
+\label{tab:q3c_lr}
+\small
+\begin{tabular}{ccl}
+\toprule
+Learning rate & Validation accuracy & \\
+\midrule
+0.0001 & 0.9825 & converges too slowly for 100 epochs \\
+0.001  & 0.9912 & \\
+0.01   & 1.0000 & \\
+0.1    & \textbf{0.5088} & training diverges \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Only the learning rate has a large effect} (Figure~\ref{fig:sensitivity}). The other four sweeps barely move:
+\begin{itemize}
+    \item \textbf{Hidden units per layer} and \textbf{dropout} are completely flat, at 0.9912 for every value.
+    \item \textbf{Hidden layers} and \textbf{batch size} each change at only one setting, by one sample. Three hidden layers reach 1.0000 (one more correct), and batch size 64 drops to 0.9825 (one more wrong).
+\end{itemize}
+With 114 validation samples, one sample is worth 0.0088 accuracy. None of these four sweeps shows a difference bigger than a single neuron.
+
+The misclassified samples explain why the curves are so flat. \textbf{The same validation sample is misclassified in 18 of the 21 runs}, and in most runs it is the only error, so 0.9912 is simply $113/114$. This is \emph{saturation}, not noise. Almost every configuration fits the training set perfectly, and the validation set contains one hard example that almost no configuration gets right. That leaves no room for a hyper-parameter to change the score. The sweeps did produce genuinely different models: the parameter count ranges from 426 (8 hidden units) to 22{,}146 (128 hidden units), and the final training loss ranges from $10^{-5}$ to $8 \times 10^{-3}$. The measurement is what saturates.
+
+The learning rate is different (Table~\ref{tab:q3c_lr}). At 0.0001 the network learns too slowly to finish converging in 100 epochs. At \textbf{0.1} training breaks down completely. The training loss stays at 0.680, close to $\ln 2 \approx 0.693$, which is the loss of a classifier that answers 50/50 for every sample. Training accuracy falls to 0.5083, and the network puts \emph{every} sample in the same class. That is why its accuracy of 0.5088 equals the share of aspiny neurons in the validation set. The steps are too large for gradient descent to settle into a minimum.
+
+\textbf{Conclusion.} This does not mean architecture never matters. The task is nearly linearly separable, so every reasonable architecture reaches the ceiling, and the only hyper-parameter that can do real damage is the one that breaks the optimization itself.
+
+\FloatBarrier
+\subsection{Question 4}
+
+A network with one hidden layer (32 units, ReLU) was trained with full-batch \textbf{Gradient Descent (GD)}. Each epoch computes the gradient over the whole training set and makes exactly one parameter update. 10\% of the training set (114 neurons) was held out as a validation set, leaving 1{,}025 neurons for training. Training used the plain SGD optimizer (no momentum, not Adam) with learning rate 0.01 for 300 epochs.
+
+For part (b) the same network was trained again with \textbf{Stochastic Gradient Descent (SGD)} with batch size 10. Both runs use the same data split, the same initial weights (same random seed), the same optimizer and the same learning rate. The only difference between them is the batch size. Figure~\ref{fig:loss_gd_sgd} shows the training and validation loss of both runs.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\linewidth,height=0.36\textheight,keepaspectratio]{loss_gd_sgd4.png}
+\caption{Training and validation cross-entropy loss per epoch. Left: full-batch GD. Right: SGD with batch size 10.}
+\label{fig:loss_gd_sgd}
+\end{figure}
+
+\FloatBarrier
+\subsubsection*{(a) Error analysis of the GD-trained model}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\linewidth,height=0.36\textheight,keepaspectratio]{confusionmatrix4a.png}
+\caption{Confusion matrix of the GD-trained MLP on the test set.}
+\label{fig:conf_gd}
+\end{figure}
+
+The GD-trained model reaches accuracy $=0.9333$, precision $=0.8954$, recall $=0.9786$ and F1 $=0.9352$. Its confusion matrix (Figure~\ref{fig:conf_gd}) gives: true negatives 129, false positives 16, false negatives 3, true positives 137.
+
+The 19 errors are strongly one-sided:
+\begin{itemize}
+    \item 16 false positives --- aspiny neurons classified as spiny
+    \item 3 false negatives --- spiny neurons classified as aspiny
+\end{itemize}
+So precision (0.8954) is far below recall (0.9786), the opposite of the logistic regression in Question~1. This model is too quick to assign the spiny label.
+
+This is the weakest model in Part~C, worse even than the perceptron. The reason is not the architecture but the training method. Full-batch GD makes \textbf{one parameter update per epoch}, so 300 epochs means only 300 updates. SGD with batch size 10 makes 103 updates per epoch, or 30{,}900 over the same 300 epochs. Figure~\ref{fig:loss_gd_sgd} shows that the GD loss is still falling at epoch 300: the model simply has not finished training.
+
+\FloatBarrier
+\subsubsection*{(b) Comparing the GD and SGD loss curves}
+
+\begin{table}[H]
+\centering
+\caption{Loss at the end of training (epoch 300).}
+\label{tab:q4b}
+\small
+\begin{tabular}{lccc}
+\toprule
+Method & Parameter updates & Final train loss & Final validation loss \\
+\midrule
+GD (full batch)  & 300    & 0.2370 & 0.2668 \\
+SGD (batch = 10) & 30{,}900 & 0.0037 & 0.0583 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{SGD converges much faster per epoch} (Table~\ref{tab:q4b}). With the same learning rate and the same 300 epochs, it reaches a training loss about 60 times lower than GD. Each SGD step is actually \emph{less} accurate than a GD step, since it estimates the gradient from 10 samples instead of all 1{,}025. But SGD takes 103 steps for every one GD step. The SGD training loss drops below 0.1 by epoch 15. The GD loss falls smoothly from 0.71 and is still going down at the end (0.2593 at epoch 250, 0.2370 at epoch 300).
+
+Both curves in Figure~\ref{fig:loss_gd_sgd} look smooth, which may seem surprising for SGD. Individual mini-batch steps are noisy, but each point on the curve is the \emph{average} loss over all 103 mini-batches in that epoch, and the averaging hides the noise.
+
+The curves differ most in the second half of training. For GD, the validation loss stays close to the training loss the whole time. For SGD, the validation loss stops improving around epoch 112 and then slowly rises, while the training loss keeps falling towards zero. This is the classic sign of overfitting, analyzed in part (c).
+
+\FloatBarrier
+\subsubsection*{(c) Does the MLP overfit?}
+
+\begin{table}[H]
+\centering
+\caption{Train vs.\ test accuracy of the two MLPs. Gap = train $-$ test.}
+\label{tab:q4c}
+\small
+\begin{tabular}{lcccl}
+\toprule
+Model & Train accuracy & Test accuracy & Gap & Diagnosis \\
+\midrule
+GD  & 0.9200 & 0.9333 & $-0.0133$ & underfitting \\
+SGD & 1.0000 & 0.9860 & $+0.0140$ & overfitting \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The answer depends on how the network was trained (Table~\ref{tab:q4c}).
+
+\textbf{The GD-trained model does not overfit; it underfits.} It scores \emph{higher} on the test set than on the training set. Its training and validation losses are both high (0.2370 and 0.2668), stay close together, and are still falling at the last epoch. A model that has not yet learned its training set cannot be memorizing it.
+
+\textbf{The SGD-trained model does overfit}, and the loss curve shows when it starts. The validation loss reaches its lowest value, \textbf{0.0501, at epoch 112}. After that it rises to 0.0583 by epoch 300, while the training loss keeps falling to 0.0037. By the end, the validation loss is about 16 times the training loss. So every epoch after 112 improves the fit on the training data while making the model slightly worse on unseen data. The test metrics agree: 1.0000 accuracy on the training set against 0.9860 on the test set.
+
+The overfitting is mild. An accuracy gap of $+0.0140$ is 4 neurons out of 285, and the model still generalizes well. Stopping training at around epoch 112, when the validation loss is lowest (early stopping), would have avoided most of it.
+
+\FloatBarrier
+\subsubsection*{(d) Adding 50\% dropout before the classification layer}
+
+A dropout layer with rate 0.5 was added between the hidden layer and the output layer, so it sits directly before the classification layer. Everything else is the same as the SGD run: batch size 10, learning rate 0.01, 300 epochs. The comparison is therefore against the SGD model, which is the model that overfitted in part (c).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.70\linewidth,height=0.36\textheight,keepaspectratio]{loss_dropout4d.png}
+\caption{Training and validation loss of the SGD model with 50\% dropout before the output layer.}
+\label{fig:loss_dropout}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Effect of dropout at the end of training.}
+\label{tab:q4d}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Model & Train acc. & Test acc. & Gap & Lowest validation loss \\
+\midrule
+SGD, no dropout  & 1.0000 & 0.9860 & $+0.0140$ & 0.0501 (epoch 112) \\
+SGD, dropout 0.5 & 0.9990 & \textbf{0.9930} & $\mathbf{+0.0060}$ & \textbf{0.0381} (epoch 121) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Yes, dropout improved generalization} (Table~\ref{tab:q4d}), on three measures:
+\begin{enumerate}
+    \item \textbf{Test accuracy increased} from 0.9860 to 0.9930, two more neurons classified correctly.
+    \item \textbf{The train--test gap was more than halved}, from $+0.0140$ to $+0.0060$. Training accuracy is no longer a perfect 1.0000, so the network stopped memorizing the training set completely.
+    \item \textbf{The lowest validation loss dropped by 24\%}, from 0.0501 to 0.0381.
+\end{enumerate}
+
+Figure~\ref{fig:loss_dropout} needs careful reading. The training loss is recorded \emph{with dropout switched on}, while the validation loss is computed with dropout switched off. This explains two things in the plot. The training curve is noisy, because each step drops a different random half of the hidden units. And the training loss stays \emph{above} the validation loss for the first $\sim$120 epochs, because the network is handicapped during training but not during validation. The loss values are therefore not a like-for-like comparison. The accuracy gap in Table~\ref{tab:q4d}, where both sets are evaluated with dropout off, is the fair measure.
+
+Dropout reduced overfitting but did not remove it. After epoch 121 the validation loss rises again (to 0.0537 by epoch 300), just more slowly than without dropout.
+
+Dropout works because, at every training step, it switches off a random half of the hidden units. The output layer can never rely on one particular unit or combination of units, so the network has to spread what it learns across many of them. The resulting model is less sensitive to the small differences between the training neurons and new ones.
+
+\FloatBarrier
+\subsubsection*{(e) Error analysis}
+
+The SGD-trained network misclassifies 4 of the 285 test neurons. We checked each of them in two ways.
+
+\paragraph{Do they resemble the other class?}
+The features were ranked by how well they separate spiny from aspiny neurons in the training set, using Cohen's $d$ (the difference between the class means divided by the pooled standard deviation). The 10 most separating features all describe the \emph{shape of the action potential}, for example the upstroke/downstroke ratio, the downstroke velocity and the peak voltage. For each test neuron we counted on how many of these 10 features it lies closer to the mean of the \emph{other} class than to its own (Table~\ref{tab:q4e}).
+
+\begin{table}[H]
+\centering
+\caption{Misclassified test neurons, compared on the 10 features that best separate the two classes.}
+\label{tab:q4e}
+\small
+\begin{tabular}{cccc}
+\toprule
+Test index & True class & $P(\text{spiny})$ & Closer to the other class on \\
+\midrule
+176 & spiny  & 0.174 & 5 of 10 features \\
+187 & aspiny & 0.632 & 4 of 10 features \\
+245 & spiny  & 0.432 & 4 of 10 features \\
+257 & aspiny & 0.925 & \textbf{7 of 10 features} \\
+\midrule
+\multicolumn{3}{l}{281 correctly classified neurons} & median 1 of 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A correctly classified neuron is closer to the other class on a median of only \textbf{1} of these features. Every misclassified neuron is closer to the other class on \textbf{4 to 7}. On exactly the features the model relies on most, these neurons look like the class it assigned them to.
+
+\paragraph{Are they unusual for their own class?}
+Each misclassified neuron also lies far from its own class mean on at least one feature. The most extreme is neuron 257, whose \texttt{sag} is \textbf{3.72 standard deviations} above the aspiny mean. However, the features on which these neurons are most unusual (\texttt{sag}, \texttt{input\_resistance\_mohm}, \texttt{threshold\_v}) separate the classes only weakly: \texttt{sag} ranks 30th of the 41 features and \texttt{threshold\_v} ranks 39th. Being unusual on these features does not by itself explain the errors. The resemblance on the strongly separating features does.
+
+\paragraph{How confident was the model?}
+Neurons 187 ($P=0.632$) and 245 ($P=0.432$) are close to the 0.5 decision boundary, so they are borderline cases. Neurons 176 ($P=0.174$) and 257 ($P=0.925$) are \textbf{confidently wrong}. For these two, the electrical features point clearly to the other class. Neuron 257 matches the spiny profile on 7 of the 10 most informative features.
+
+\paragraph{Conclusion.}
+The errors are not random. They reflect a real overlap between the two cell types in this feature space. A few neurons have the electrical signature of the other type, and no classifier using these features alone could be expected to classify them correctly. This could be natural biological variation, or these neurons could have incorrect labels in the dataset.
+
+\FloatBarrier
+\subsection{Conclusion}
+
+\begin{table}[H]
+\centering
+\caption{Test performance of all models in Part C.}
+\label{tab:conclusion}
+\small
+\begin{tabular}{lcc}
+\toprule
+Model & Test accuracy & Test F1 \\
+\midrule
+Logistic regression                      & 0.9860 & 0.9856 \\
+Perceptron                               & 0.9614 & 0.9614 \\
+MLP, 1 hidden layer (Adam)               & 0.9860 & 0.9857 \\
+MLP, 2 hidden layers + dropout 0.2 (Adam) & \textbf{0.9930} & \textbf{0.9929} \\
+MLP, GD                                  & 0.9333 & 0.9352 \\
+MLP, SGD (batch 10)                      & 0.9860 & 0.9857 \\
+MLP, SGD + dropout 0.5                   & \textbf{0.9930} & \textbf{0.9929} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+    \item \textbf{The task is almost linearly separable.} Logistic regression already reaches 98.6\%, and the best MLP is only two neurons better.
+    \item \textbf{Training mattered more than architecture.} The same network got 0.9333 with GD and 0.9860 with SGD, because GD made far fewer updates. In the sweep, only the learning rate had a real effect.
+    \item \textbf{The linear models did not overfit; the MLPs did, mildly.} The MLPs reached 100\% training accuracy, and adding dropout halved the train--test gap and gave the best test accuracy.
+    \item \textbf{The few remaining errors are neurons that look like the other class} on the most informative features, so these features alone probably can't classify them correctly.
+\end{itemize}
+
+
+\end{document}
