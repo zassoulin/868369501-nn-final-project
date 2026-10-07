@@ -1,10 +1,4 @@
 """Part B -- our own implementation of Principal Component Analysis (PCA).
-
-Same interface as `sklearn.decomposition.PCA` (fit / transform / fit_transform /
-inverse_transform, `components_`, `explained_variance_ratio_`), so it can be dropped into the
-notebook in its place. The algorithm itself is implemented here with numpy only:
-center the data -> covariance matrix -> eigen-decomposition -> sort eigenvectors by eigenvalue
--> project onto the top-k eigenvectors.
 """
 import numpy as np
 
