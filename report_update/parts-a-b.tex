@@ -316,14 +316,15 @@ Train and validation MSE stay close together for all three variants (final gap $
 
 \begin{table}[H]
 \centering
-\caption{Class separation and cross-validated classifier accuracy in the three-dimensional representations.}
+\caption{Class separation and cross-validated classifier accuracy in the three-dimensional representations, computed on all 1,424 neurons.}
 \label{tab:b2c}
 \small
 \begin{tabular}{@{}lcc@{}}
 \toprule
 \textbf{Representation} & \textbf{Silhouette score} & \textbf{5-fold CV accuracy (LogReg)} \\
 \midrule
-PCA-3 & 0.2276 & 0.8680 \\
+PCA-3 (fit on all rows, Q1) & 0.2276 & 0.8680 \\
+PCA-3 (fit on AE training rows) & 0.2247 & 0.8673 \\
 Standard AE & 0.3037 & 0.8947 \\
 Denoising AE & 0.2989 & 0.8975 \\
 Weight-Decay AE & 0.2795 & 0.8778 \\
@@ -331,7 +332,33 @@ Weight-Decay AE & 0.2795 & 0.8778 \\
 \end{tabular}
 \end{table}
 
+Table~\ref{tab:b2c} is computed on the 3D coordinates of all 1,424 neurons: the 1,139 rows the autoencoders were trained on plus the 285 validation rows. The PCA-3 of Question~1 was fitted on all 1,424 rows, whereas the autoencoders were fitted on the 1,139 training rows only, so the two were not fitted on the same rows. To check that this does not drive the result, the table also includes a PCA-3 fitted on exactly the same training rows and scaling as the autoencoders; it scores almost identically.
+
 Qualitatively, the AE bottlenecks show the two classes forming slightly more distinct blobs than the rigid, linear PCA projection. Quantitatively, all three AE variants beat PCA-3 on both silhouette score and cross-validated linear-classifier accuracy. Among the AE variants the two metrics do not agree on a single winner, and the top two are nearly tied: the Standard AE has the highest silhouette (0.304 vs.\ 0.299), while the Denoising AE has the highest cross-validated accuracy (0.898 vs.\ 0.895). We select by cross-validated accuracy, so the Denoising AE is carried forward to Q2.d/Q2.e.
+
+\begin{table}[H]
+\centering
+\caption{Reconstruction MSE through three dimensions (standardized units). Every model is fitted on the same 1,139 training rows and evaluated on those rows and on the 285 held-out validation rows.}
+\label{tab:b2c-recon}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Representation} & \textbf{Train MSE} & \textbf{Validation MSE} & \textbf{Validation MSE vs.\ PCA-3} \\
+\midrule
+PCA-3 (fit on AE training rows) & 0.3736 & 0.4021 & --- \\
+Standard AE & 0.2997 & 0.3627 & $-9.8\%$ \\
+Denoising AE & 0.3025 & 0.3628 & $-9.8\%$ \\
+Weight-Decay AE & 0.3318 & 0.3758 & $-6.5\%$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+{\footnotesize\emph{Note:} the train MSE here differs slightly from Table~\ref{tab:b2a}. Table~\ref{tab:b2a} reports the loss averaged over the last training epoch, while the weights were still being updated (and, for the Denoising AE, on noisy inputs); this table evaluates the final weights on clean inputs. The validation MSE is measured the same way in both, so it is identical.\par}
+\end{table}
+
+Both methods squeeze 41 features through 3 numbers, so they can also be compared on reconstruction (Table~\ref{tab:b2c-recon}). On unseen neurons the nonlinear autoencoder reconstructs only about 10\% better than plain linear PCA (validation MSE 0.363 vs.\ 0.402). The comparison has to be made on the same rows: the Question~1 PCA-3 explains 62.7\% of the variance, i.e.\ an MSE of 0.373, but that is an in-sample figure on the rows it was fitted on and is not comparable with the autoencoder's held-out 0.363.
+
+Taken together, the autoencoder's advantage in \emph{reconstruction} is small, yet its advantage in \emph{class separation} is proportionally larger: the silhouette score rises by about a third (0.225 $\rightarrow$ 0.30) and classification accuracy by about 3 points. Neither method ever saw the labels. This suggests that most of what three dimensions can preserve of these features is already captured linearly, and that the little extra the nonlinear bottleneck keeps is disproportionately the structure that distinguishes spiny from aspiny neurons. Reconstruction error alone would have understated the difference between the two representations.
 
 \FloatBarrier
 \subsubsection*{(d) Reconstruction Examples}
@@ -350,4 +377,4 @@ The worst reconstructions are dominated by a single feature, \texttt{latency}, w
 \FloatBarrier
 \subsubsection*{(e) Did the Autoencoder Learn a Better Representation?}
 
-Yes, modestly but consistently. All three AE variants beat PCA-3 on both silhouette score (0.228 $\rightarrow$ 0.28-0.30) and 5-fold cross-validated classifier accuracy (0.868 $\rightarrow$ 0.88-0.90); the selected variant, the Denoising AE, raises accuracy to 0.898 and silhouette to 0.299. The gain is real but not dramatic: PCA already does well (0.868) because a single linear axis (PC1) already captures much of the spiny/aspiny distinction (Q1.c), leaving limited room for a nonlinear method to improve further. Regularization made little difference to class separation: the Denoising AE and the Standard AE are nearly tied (accuracy 0.898 vs.\ 0.895, silhouette 0.299 vs.\ 0.304), and the Weight-Decay AE is the lowest of the three on both metrics (0.878, 0.280).
+Yes, modestly but consistently. All three AE variants beat PCA-3 on both silhouette score (0.228 $\rightarrow$ 0.28-0.30) and 5-fold cross-validated classifier accuracy (0.868 $\rightarrow$ 0.88-0.90); the selected variant, the Denoising AE, raises accuracy to 0.898 and silhouette to 0.299. The gain is real but not dramatic: PCA already does well (0.868) because a single linear axis (PC1) already captures much of the spiny/aspiny distinction (Q1.c), leaving limited room for a nonlinear method to improve further. The improvement in class separation is nevertheless larger than the improvement in reconstruction: fitted on the same training rows, the autoencoder's validation reconstruction MSE is only about 10\% below PCA-3's (0.363 vs.\ 0.402), while its silhouette score is about a third higher. Regularization made little difference to class separation: the Denoising AE and the Standard AE are nearly tied (accuracy 0.898 vs.\ 0.895, silhouette 0.299 vs.\ 0.304), and the Weight-Decay AE is the lowest of the three on both metrics (0.878, 0.280).
