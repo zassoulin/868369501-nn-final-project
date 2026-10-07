@@ -14,6 +14,12 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 
+# Reset to matplotlib's default (white) style and pin a white background: a dark IDE
+# theme (e.g. PyCharm's) otherwise renders the figures on a black background.
+plt.style.use('default')
+plt.rcParams.update({'figure.facecolor': 'white', 'axes.facecolor': 'white',
+                     'savefig.facecolor': 'white', 'savefig.transparent': False})
+
 # seed
 SEED = 42
 
